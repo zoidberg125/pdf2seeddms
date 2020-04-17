@@ -3,6 +3,7 @@ import logging
 import requests
 import argparse
 import os
+import sys
 import json
 import swagger_client
 import seeddms
@@ -41,6 +42,7 @@ def pdf2seeddms(directory, orcapiurl,logger, seeddmsURL,seedUser, seedPWD):
 
     for filename in os.listdir(directory):
         if filename.endswith(".pdf"):
+            logging.info("Uploading " + filename + " to OCR API")
             results = api_instance.post_pdf2seeddmsul(os.path.join(directory,filename),_preload_content=False)
             logging.info("Before writing file "+ filename + " back move old one into back directory")
             os.system("mv "+ os.path.join(directory,filename) +" "+os.path.abspath(dirName))
