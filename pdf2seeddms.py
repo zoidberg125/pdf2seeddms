@@ -42,7 +42,7 @@ def pdf2seeddms(directory, orcapiurl,logger, seeddmsURL,seedUser, seedPWD):
     for filename in os.listdir(directory):
         if filename.endswith(".pdf"):
             results = api_instance.post_pdf2seeddmsul(os.path.join(directory,filename),_preload_content=False)
-            logging.info("Before writing file back move old one into back directory")
+            logging.info("Before writing file "+ filename  " back move old one into back directory")
             os.system("mv "+ os.path.join(directory,filename) +" "+os.path.abspath(dirName))
             with open(os.path.join(directory,filename), "wb+") as f:
                 f.write(results.data)
@@ -73,3 +73,4 @@ if __name__ == "__main__":
         pdf2seeddms(args.directory, args.orcapiurl,root_logger,args.seeddmsurl,args.seeddmsuser,args.seeddmspwd)
     except Exception as e:
         root_logger.exception("File conversion failed")
+        sys.exit(1)
