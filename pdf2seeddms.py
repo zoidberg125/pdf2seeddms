@@ -2,12 +2,10 @@
 import logging
 import requests
 import argparse
-import ocrspace
 import os
 import json
 import swagger_client
 import seeddms
-from SlackNotification import SlackNotification
 from pathlib import Path
 from swagger_client.api import Pdf2seeddmsApi
 from rfc5424logging import Rfc5424SysLogHandler
@@ -71,9 +69,7 @@ if __name__ == "__main__":
     required_list_columns.add_argument('-p', '--seeddms-pwd',dest='seeddmspwd',help='SeedDMS Pwd', required=True)
     args = parser.parse_args()
     root_logger = setup_logging()
-    slacknotify = SlackNotification(root_logger)
     try:
         pdf2seeddms(args.directory, args.orcapiurl,root_logger,args.seeddmsurl,args.seeddmsuser,args.seeddmspwd)
     except Exception as e:
         root_logger.exception("File conversion failed")
-        slacknotify.notify("File conversion failed!")
