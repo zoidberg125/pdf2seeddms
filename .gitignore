@@ -7,6 +7,15 @@ __pycache__/
 bin/
 include/
 
+#input directory
+input
+
+#back directory
+back/
+
+#PDF
+*.pdf
+
 # jpgs
 *.jpg
 *.jpeg
