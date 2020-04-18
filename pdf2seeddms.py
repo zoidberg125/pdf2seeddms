@@ -12,7 +12,7 @@ from swagger_client.api import Pdf2seeddmsApi
 from rfc5424logging import Rfc5424SysLogHandler
 
 
-def upload2seeddms(file, seeddmsURL,seedUser, seedPWD):
+def upload2seeddms(file, seeddmsURL,seedUser, seedPWD,seedId):
     logging.info("uploading file to SeedDMS")
     config = seeddms.Config(baseurl=seeddmsURL,
                             username=seedUser,
@@ -23,10 +23,10 @@ def upload2seeddms(file, seeddmsURL,seedUser, seedPWD):
                        password = config.password,
                        targetfolder = config.targetfolder)
     sdms.do_login()
-    sdms.upload_document(folder_id=6, documentpath=file, name=Path(file).stem)
+    sdms.upload_document(folder_id=int(seedId), documentpath=file, name=Path(file).stem)
 
 
-def pdf2seeddms(directory, orcapiurl,logger, seeddmsURL,seedUser, seedPWD):
+def pdf2seeddms(directory, orcapiurl,logger, seeddmsURL,seedUser, seedPWD,seedId, skipOcr):
     logging.info("iterating over files and uploading them to SeedDMS")
     config = swagger_client.Configuration()
     config.host = orcapiurl
@@ -42,13 +42,19 @@ def pdf2seeddms(directory, orcapiurl,logger, seeddmsURL,seedUser, seedPWD):
 
     for filename in os.listdir(directory):
         if filename.endswith(".pdf") or filename.endswith(".PDF"):
-            logging.info("Uploading " + filename + " to OCR API")
-            results = api_instance.post_pdf2seeddmsul(os.path.join(directory,filename),_preload_content=False)
-            logging.info("Before writing file "+ filename + " back move old one into back directory")
-            os.system("mv "+ os.path.join(directory,filename) +" "+os.path.abspath(dirName))
-            with open(os.path.join(directory,filename), "wb+") as f:
-                f.write(results.data)
-            upload2seeddms(file=os.path.join(directory,filename),seeddmsURL=seeddmsURL,seedUser=seedUser,seedPWD=seedPWD)
+            if skipOcr:
+                logging.info("Uploading " + filename + " to OCR API")
+                results = api_instance.post_pdf2seeddmsul(os.path.join(directory,filename),_preload_content=False)
+                logging.info("Before writing file "+ filename + " back move old one into back directory")
+                os.system("mv "+ os.path.join(directory,filename) +" "+os.path.abspath(dirName))
+                with open(os.path.join(directory,filename), "wb+") as f:
+                    f.write(results.data)
+            upload2seeddms(file=os.path.join(directory,filename),
+                            seeddmsURL=seeddmsURL,
+                            seedUser=seedUser,
+                            seedPWD=seedPWD,
+                            seedId=seedId
+                            )
             os.remove(os.path.join(directory,filename))
         else:
             continue
@@ -69,10 +75,22 @@ if __name__ == "__main__":
     required_list_columns.add_argument('-s', '--seeddms-api-url',dest='seeddmsurl',help='SeedDMS API URL', required=True)
     required_list_columns.add_argument('-n', '--seeddms-user',dest='seeddmsuser',help='SeedDMS User', required=True)
     required_list_columns.add_argument('-p', '--seeddms-pwd',dest='seeddmspwd',help='SeedDMS Pwd', required=True)
+    required_list_columns.add_argument('-i', '--seeddms-folder-id',dest='seeddmsid',help='SeedDMS Folder id', required=True)
+    required_list_columns.add_argument('-o', '--skip-ocr',action='store_false',dest='skipOcr',help='Skip ocr', required=False)
     args = parser.parse_args()
     root_logger = setup_logging()
     try:
-        pdf2seeddms(args.directory, args.orcapiurl,root_logger,args.seeddmsurl,args.seeddmsuser,args.seeddmspwd)
+        pdf2seeddms(args.directory,
+                    args.orcapiurl,
+                    root_logger,
+                    args.seeddmsurl,
+                    args.seeddmsuser,
+                    args.seeddmspwd,
+                    args.seeddmsid,
+                    args.skipOcr
+                    )
+
+
     except Exception as e:
-        root_logger.exception("File conversion failed")
+        root_logger.exception("File processing failed")
         sys.exit(1)
