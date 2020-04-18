@@ -41,7 +41,7 @@ def pdf2seeddms(directory, orcapiurl,logger, seeddmsURL,seedUser, seedPWD):
         logging.info("Directory " + dirName + "already exist")
 
     for filename in os.listdir(directory):
-        if filename.endswith(".pdf"):
+        if filename.endswith(".pdf") or filename.endswith(".PDF"):
             logging.info("Uploading " + filename + " to OCR API")
             results = api_instance.post_pdf2seeddmsul(os.path.join(directory,filename),_preload_content=False)
             logging.info("Before writing file "+ filename + " back move old one into back directory")
